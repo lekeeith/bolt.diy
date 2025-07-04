@@ -6,7 +6,10 @@ WORKDIR /app
 # Install dependencies (this step is cached as long as the dependencies don't change)
 COPY package.json pnpm-lock.yaml ./
 
-RUN corepack enable pnpm && pnpm install
+#RUN npm install -g corepack@latest
+
+#RUN corepack enable pnpm && pnpm install
+RUN npm install -g pnpm && pnpm install
 
 # Copy the rest of your app's source code
 COPY . .
@@ -28,6 +31,7 @@ ARG OLLAMA_API_BASE_URL
 ARG XAI_API_KEY
 ARG TOGETHER_API_KEY
 ARG TOGETHER_API_BASE_URL
+ARG AWS_BEDROCK_CONFIG
 ARG VITE_LOG_LEVEL=debug
 ARG DEFAULT_NUM_CTX
 
@@ -42,14 +46,16 @@ ENV WRANGLER_SEND_METRICS=false \
     XAI_API_KEY=${XAI_API_KEY} \
     TOGETHER_API_KEY=${TOGETHER_API_KEY} \
     TOGETHER_API_BASE_URL=${TOGETHER_API_BASE_URL} \
+    AWS_BEDROCK_CONFIG=${AWS_BEDROCK_CONFIG} \
     VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}\
+    RUNNING_IN_DOCKER=true
 
 # Pre-configure wrangler to disable metrics
 RUN mkdir -p /root/.config/.wrangler && \
     echo '{"enabled":false}' > /root/.config/.wrangler/metrics.json
 
-RUN npm run build
+RUN pnpm run build
 
 CMD [ "pnpm", "run", "dockerstart"]
 
@@ -80,8 +86,10 @@ ENV GROQ_API_KEY=${GROQ_API_KEY} \
     XAI_API_KEY=${XAI_API_KEY} \
     TOGETHER_API_KEY=${TOGETHER_API_KEY} \
     TOGETHER_API_BASE_URL=${TOGETHER_API_BASE_URL} \
+    AWS_BEDROCK_CONFIG=${AWS_BEDROCK_CONFIG} \
     VITE_LOG_LEVEL=${VITE_LOG_LEVEL} \
-    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}
+    DEFAULT_NUM_CTX=${DEFAULT_NUM_CTX}\
+    RUNNING_IN_DOCKER=true
 
 RUN mkdir -p ${WORKDIR}/run
 CMD pnpm run dev --host
